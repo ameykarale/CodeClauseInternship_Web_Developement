@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Chat</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            margin: 20px;
+        }
+        #chat-container {
+            max-width: 600px;
+            margin: auto;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #messages {
+            list-style-type: none;
+            padding: 10px;
+            margin: 0;
+        }
+        #messages li {
+            margin-bottom: 10px;
+            color: var(--user-color);
+        }
+        #messageInput {
+            width: 80%;
+            padding: 8px;
+            margin-right: 5px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+        }
+        #sendButton {
+            width: 18%;
+            padding: 8px;
+            border: 1px solid var(--user-color);
+            border-radius: 5px;
+            color: #fff;
+            background-color: var(--user-color);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="card" id="chat-container">
+            <div class="card-header bg-primary text-white">
+                <h5 class="m-0">Amey's HUB</h5>
+            </div>
+            <div class="card-body">
+                <ul id="messages"></ul>
+            </div>
+            <div class="card-footer">
+                <div class="input-group">
+                    <input id="messageInput" class="form-control" autocomplete="off" placeholder="Type your message...">
+                    <div class="input-group-append">
+                        <button id="sendButton" class="btn btn-primary" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('request_name', function(data){
+            var userName = prompt('Please enter your name:');
+            socket.emit('submit_name', {'user_id': data.user_id, 'name': userName || 'Anonymous'});
+        });
+
+        socket.on('color_assigned', function(data){
+            var userColor = data.color;
+            document.documentElement.style.setProperty('--user-color', userColor);
+        });
+
+        socket.on('user_connected', function(data){
+            var ul = document.getElementById('messages');
+            var li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.style.color = data.color;
+            li.appendChild(document.createTextNode(data.name + ' has joined the chat.'));
+            ul.appendChild(li);
+        });
+
+        socket.on('user_disconnected', function(data){
+            var ul = document.getElementById('messages');
+            var li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.style.color = data.color;
+            li.appendChild(document.createTextNode(data.name + ' has left the chat.'));
+            ul.appendChild(li);
+        });
+
+        socket.on('message', function(data){
+            var ul = document.getElementById('messages');
+            var li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.style.color = data.color;
+            li.appendChild(document.createTextNode(data.name + ': ' + data.text));
+            ul.appendChild(li);
+        });
+
+        function sendMessage() {
+            var messageInput = document.getElementById('messageInput');
+            var message = messageInput.value;
+            if (message.trim() !== '') {
+                socket.emit('message', {'text': message});
+                messageInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>

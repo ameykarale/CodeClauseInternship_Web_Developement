@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: url('bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #music-container {
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #record {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 20px;
+            animation: spin 3s linear infinite;
+            background: url('record.png') no-repeat center center;
+            background-size: cover;
+            animation-play-state: paused;
+        }
+
+        #music-container.playing #record {
+            animation-play-state: running;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #song-details {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #song-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+        }
+
+        #controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .control-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        #volume-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #volume-label {
+            font-size: 14px;
+            margin-top: 5px;
+            color: #333;
+        }
+
+        #volume {
+            width: 100px;
+        }
+
+        #seek-bar {
+            width: 80%;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        #seek-bar input {
+            flex: 1;
+            margin: 0 10px;
+        }
+
+        #seek-bar span {
+            font-size: 14px;
+            color: #333;
+        }
+
+        #time {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="music-container">
+        <div id="record"></div>
+        <div id="song-details">
+            <img id="song-image" src='song.jpg' alt='Song Image'>
+            <h2 id="title">Dil Kya Kare</h2>
+            <p id="artist">Singer: Kishor Kumar</p>
+        </div>
+        <div id="controls">
+            <button id="play" class="control-button">Play</button>
+            <button id="pause" class="control-button" style="display: none;">Pause</button>
+            <button id="next" class="control-button">Next</button>
+            <button id="previous" class="control-button">Previous</button>
+        </div>
+        <div id="volume-container">
+            <div id="volume-label">Volume</div>
+            <input type="range" id="volume" value="100" />
+        </div>
+        <div id="time">
+            <span id="current-time">0:00</span> / <span id="total-duration">0:00</span>
+        </div>
+        <audio id="track" controls style="display: none;">
+            <source src="F:/Internship/CodeClause/Task 2/Dil Kya Kare.mp3" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+
+        <script>
+            let musicContainer = document.getElementById('music-container');
+            let record = document.getElementById('record');
+            let playButton = document.getElementById('play');
+            let pauseButton = document.getElementById('pause');
+            let nextButton = document.getElementById('next');
+            let previousButton = document.getElementById('previous');
+            let volumeContainer = document.getElementById('volume-container');
+            let volumeSlider = document.getElementById('volume');
+            let seekBar = document.getElementById('seek');
+            let track = document.getElementById('track');
+            let currentTimeDisplay = document.getElementById('current-time');
+            let totalDurationDisplay = document.getElementById('total-duration');
+
+            let isPlaying = false;
+            let currentSongIndex = 0;
+
+            const playlist = [
+            {
+                src: "F:/Internship/CodeClause/Task 2/Bombay Dreams.mp3",
+                image: "F:/Internship/CodeClause/Task 2/song2.jpg",
+                title: "Bombay Dreams",
+                artist: "Singer: Kavita Sheth"
+            },
+            {
+                src: "F:/Other Files/Song/Hoshwalon Ko Khabar Kya.mp3",
+                image: "F:/Other Files/Moto/my pics/300 kb photo me.jpg",
+                title: "Hoshwalon Ko Khabar Kya",
+                artist: "Singer: Jagjit Singh"
+            },
+            {
+                src: "F:/Other Files/Song/Kabhi Yaadon Mein Aaun.mp3",
+                image: "E:/Moto/moto photos/1662705900461.jpg",
+                title: "Kabhi Yaadon Mai Aaun",
+                artist: "Singer: Faheem"
+            },
+            {
+                src: "F:/Other Files/Song/Haareya Song  Meri Pyaari Bindu  Ayushmann, Parineeti  Arijit Singh  Sachin-Jigar, Priya Saraiya.mp3",
+                image: "F:/Other Files/PICS2023/IMG_20230508_192543681_HDR.jpg",
+                title: "Haareya",
+                artist: "Singer: Aayushman Khurana"
+            },
+            ];
+
+            function playTrack() {
+                track.play();
+                isPlaying = true;
+                playButton.style.display = 'none';
+                pauseButton.style.display = 'inline-block';
+                musicContainer.classList.add('playing');
+            }
+
+            function pauseTrack() {
+                track.pause();
+                isPlaying = false;
+                playButton.style.display = 'inline-block';
+                pauseButton.style.display = 'none';
+                musicContainer.classList.remove('playing');
+            }
+
+            function loadNextSong() {
+                currentSongIndex = (currentSongIndex + 1) % playlist.length;
+                loadSongDetails();
+                playTrack();
+            }
+
+            function loadPreviousSong() {
+                currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+                loadSongDetails();
+                playTrack();
+            }
+
+            function loadSongDetails() {
+                const currentSong = playlist[currentSongIndex];
+                track.src = currentSong.src;
+                track.load();
+
+                document.getElementById('song-image').src = currentSong.image;
+                document.getElementById('title').innerText = currentSong.title;
+                document.getElementById('artist').innerText = currentSong.artist;
+            }
+
+            function updateTimeDisplays() {
+                currentTimeDisplay.innerText = formatTime(track.currentTime);
+                totalDurationDisplay.innerText = formatTime(track.duration);
+            }
+
+            function formatTime(timeInSeconds) {
+                let minutes = Math.floor(timeInSeconds / 60);
+                let seconds = Math.floor(timeInSeconds % 60);
+                return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }
+
+            track.addEventListener('loadedmetadata', updateTimeDisplays);
+
+            track.addEventListener('timeupdate', updateTimeDisplays);
+
+            playButton.addEventListener('click', playTrack);
+            pauseButton.addEventListener('click', pauseTrack);
+            nextButton.addEventListener('click', loadNextSong);
+            previousButton.addEventListener('click', loadPreviousSong);
+
+            volumeSlider.addEventListener('input', function () {
+                let volumeValue = volumeSlider.value;
+                track.volume = volumeValue / 100;
+            });
+
+            seekBar.addEventListener('input', function () {
+                let seekValue = seekBar.value;
+                let duration = track.duration;
+                track.currentTime = (seekValue / 100) * duration;
+            });
+
+            loadSongDetails();
+        </script>
+    </div>
+
+</body>
+
+</html>
